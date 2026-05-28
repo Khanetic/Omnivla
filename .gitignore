@@ -26,5 +26,5 @@ omnivla-edge/
 # Ignore all wandb directories everywhere
 **/wandb/
 # Model weights (auto-downloaded by ultralytics on first run)
-*.pt
-*.pth
+# *.pt
+# *.pth
