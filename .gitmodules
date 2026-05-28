@@ -1,0 +1,3 @@
+[submodule "omnivla-edge"]
+	path = omnivla-edge
+	url = https://huggingface.co/NHirose/omnivla-edge
