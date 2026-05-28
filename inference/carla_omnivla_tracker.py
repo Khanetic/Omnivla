@@ -34,11 +34,13 @@ from PIL import Image, ImageDraw, ImageFont
 from utils_policy import transform_images_map, load_model, transform_images_PIL, transform_images_PIL_mask
 
 try:
+    from yolo_detector import YOLODetector
     from hybrid_tracker import HybridTracker
     _TRACKER_AVAILABLE = True
 except ImportError as e:
     print(f"[WARNING] HybridTracker import failed: {e}")
     print("[WARNING] Falling back to oracle pose (USE_TRACKER_POSE forced to False)")
+    YOLODetector = None
     _TRACKER_AVAILABLE = False
 
 # ── config ────────────────────────────────────────────────────────────────────
@@ -461,9 +463,13 @@ def cleanup(sig=None, frame=None):
 signal.signal(signal.SIGINT, cleanup)
 
 # ── init tracker ──────────────────────────────────────────────────────────────
+detector     = None
 tracker      = None
 use_tracker  = USE_TRACKER_POSE and _TRACKER_AVAILABLE
 if use_tracker:
+    print("Initialising YOLODetector …")
+    detector = YOLODetector(conf_threshold=0.30,
+                            device="cuda" if torch.cuda.is_available() else "cpu")
     print("Initialising HybridTracker …")
     tracker = HybridTracker(
         max_cosine_distance=0.15,
@@ -534,8 +540,9 @@ for step in range(MAX_STEPS):
     goal_pose_np   = oracle_pose   # default: oracle fallback
 
     if use_tracker:
-        frame_bgr = np.array(pil)[:, :, ::-1]  # PIL RGB → BGR for OpenCV/YOLO
-        tracks    = tracker.update(frame_bgr)
+        frame_bgr  = np.array(pil)[:, :, ::-1]  # PIL RGB → BGR for OpenCV/YOLO
+        detections = detector.detect(frame_bgr)
+        tracks     = tracker.update(frame_bgr, detections)
 
         # filter to person class (class_id == 0 in COCO)
         persons = [t for t in tracks if len(t) >= 6 and int(t[5]) == 0]
