@@ -46,7 +46,7 @@ class MultiLayerDecoder_mask3(nn.Module):
         x = torch.mean(x, dim=1)        
         x = x.reshape(x.shape[0], -1)
         if no_goal_mask.sum().item() == 9:
-            dev_gpu = no_goal_mask.get_device()
+            dev_gpu = no_goal_mask.device
             no_goal_mask = torch.tensor([9]).to(dev_gpu)
         x = torch.cat((x, no_goal_mask.unsqueeze(1)), axis=1)
         for i in range(len(self.output_layers)):
@@ -238,7 +238,7 @@ class OmniVLA_edge(BaseModel):
             goal_encoding_img = goal_encoding_img.unsqueeze(1)
         assert goal_encoding_img.shape[2] == self.goal_encoding_size
         
-        device = obs_img.get_device()
+        device = obs_img.device
         goal_encoding = self.local_goal(goal_pose).unsqueeze(1)
         map_encoding = self.goal_encoder.extract_features(map_images).unsqueeze(1)
         map_encoding = self.obs_encoder._avg_pooling(map_encoding)

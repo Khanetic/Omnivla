@@ -458,7 +458,8 @@ def navigation_thread(
             goal_pose_t  = (torch.tensor(goal_pose_np, dtype=torch.float32)
                             .unsqueeze(0).to(device))
 
-            cur_large = transform_images_PIL_mask(gray224, mask224).to(device)
+            cur_large_pil = obs_frame_pil.resize((224, 224)) if obs_frame_pil is not None else gray224
+            cur_large = transform_images_PIL_mask(cur_large_pil, mask224).to(device)
 
             # rolling context — use actual camera frame so OmniVLA sees the scene
             ctx_buf.append(ctx_frame)
